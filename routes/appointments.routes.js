@@ -1,42 +1,62 @@
 import express from 'express';
 import db from '../database/index.js';
 import { Op } from 'sequelize';
+import { TZDate } from "@date-fns/tz";
+import { format, setHours, isSameDay } from 'date-fns';
 // Configura Multer para guardar el archivo en memoria.
 // Esto es ideal para archivos pequeños como el que describes.
 const router = express.Router();
 
 router.use(express.json());
 
+const ZONE = process.env.ZONE_TIME
+
+// Función para convertir tiempo en formato HH:MM:SS a segundos
+const timeToSeconds = (timeStr) => {
+  const [hours, minutes, seconds] = timeStr.split(':').map(Number);
+  return hours * 3600 + minutes * 60 + (seconds || 0);
+};
+
 // Obtener todas las citas de la semana actual (de lunes a sábado)
 router.get('/', async (req, res) => {
   try {
-    // Obtener la fecha actual
-    const now = new Date();
+    let startDate, endDate;
     
-    // Obtener el día de la semana (0 = domingo, 1 = lunes, ..., 6 = sábado)
-    const currentDay = now.getDay();
-    
-    // Calcular la diferencia de días hasta el próximo lunes
-    // Si es domingo (0), sumamos 1 día para llegar al lunes de la próxima semana
-    // Si es otro día, calculamos cuántos días faltan para el próximo lunes
-    const diffDays = currentDay === 0 ? 1 : 8 - currentDay;
-    
-    // Crear fecha de inicio (lunes de la semana actual a mediodía)
-    const monday = new Date(now);
-    monday.setDate(now.getDate() + diffDays);
-    monday.setHours(12, 0, 0, 0); // Mediodía (12:00:00) para evitar problemas de zona horaria
-    
-    // Crear fecha de fin (sábado de la semana actual a mediodía)
-    const saturday = new Date(monday);
-    saturday.setDate(monday.getDate() + 5); // 5 días después del lunes es sábado
-    saturday.setHours(12, 0, 0, 0); // Mediodía (12:00:00) para evitar problemas de zona horaria
-
-    // Obtener las citas de la semana actual (de lunes a sábado)
+    // Si se proporcionan fechas en la consulta, usarlas
+    if (req.query.startDate && req.query.endDate) {
+      startDate = new TZDate(req.query.startDate, ZONE);
+      endDate = new TZDate(req.query.endDate, ZONE);
+      
+      // Asegurarse de que las fechas sean válidas
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return res.status(400).json({ 
+          message: 'Formato de fecha inválido. Use YYYY-MM-DD' 
+        });
+      }
+      
+      // Establecer la hora a mediodía para evitar problemas de zona horaria
+      startDate = setHours(startDate, 0, 0, 0);
+      endDate = setHours(endDate, 23, 59, 59); // Fin del día
+    } else {
+      // Si no se proporcionan fechas, usar la lógica de la semana actual
+      const now = new TZDate(new Date(), ZONE);
+      const currentDay = now.getDay();
+      const diffDays = currentDay === 0 ? 1 : 1 - currentDay;
+      
+      startDate = new TZDate(now);
+      startDate.setDate(now.getDate() + diffDays);
+      startDate = setHours(startDate, 0, 0, 0);
+      
+      endDate = new TZDate(startDate);
+      endDate.setDate(startDate.getDate() + 5);
+      endDate = setHours(endDate, 23, 59, 59);
+    }
+    // Obtener las citas en el rango de fechas
     const appointments = await db.Appointment.findAll({
       where: {
         day: {
-          [Op.gte]: monday,  // Mayor o igual al lunes
-          [Op.lte]: saturday // Menor o igual al sábado
+          [Op.gte]: startDate,
+          [Op.lte]: endDate
         }
       },
       order: [
@@ -46,9 +66,9 @@ router.get('/', async (req, res) => {
     });
 
     res.json({
-        startDate: monday,
-        endDate: saturday,
-        appointments: appointments
+      startDate: startDate,
+      endDate: endDate,
+      appointments: appointments
     });
 
   } catch (error) {
@@ -63,7 +83,7 @@ router.get('/', async (req, res) => {
 // Obtener un número de teléfono por ID
 router.get('/:id', async (req, res) => {
   try {
-    const phoneNumber = await db.PhoneNumbers.findByPk(req.params.id);
+    const phoneNumber = await db.Appointment.findByPk(req.params.id);
     if (!phoneNumber) {
       return res.status(404).json({
         status: 'error',
@@ -94,8 +114,8 @@ router.post('/', async (req, res) => {
     }
 
     // Crear la fecha de la cita (el día seleccionado a las 00:00:00)
-    const appointmentDate = new Date(day);
-    
+    const appointmentDate = new TZDate(`${day}T12:00:00`, ZONE);
+
     const newAppointment = await db.Appointment.create({
       day: appointmentDate, // Guardamos la fecha completa
       start_time: start_time,
@@ -107,7 +127,7 @@ router.post('/', async (req, res) => {
 
     res.status(201).json({
       status: 'success',
-      data: newAppointment
+      newAppointment: newAppointment
     });
   } catch (error) {
     console.error('Error al crear la cita:', error);
@@ -119,38 +139,139 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Actualizar un número de teléfono
+// Actualizar una cita
 router.put('/:id', async (req, res) => {
   try {
-    const phoneNumber = await db.PhoneNumbers.findByPk(req.params.id);
-    if (!phoneNumber) {
-      return res.status(404).json({ message: 'Número de teléfono no encontrado' });
+    const appointment = await db.Appointment.findByPk(req.params.id);
+    if (!appointment) {
+      return res.status(404).json({ 
+        status: 'error',
+        message: 'Cita no encontrada' 
+      });
     }
 
-    const { phoneNumber: newPhoneNumber, status } = req.body;
-    await phoneNumber.update({
-      phoneNumber: newPhoneNumber,
-      status: status || phoneNumber.status
+    // Validar que la cita no esté eliminada lógicamente
+    if (appointment.isDeleted) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'No se puede actualizar una cita eliminada'
+      });
+    }
+
+    const { day, start_time, end_time, status } = req.body;
+    const now = new TZDate(new Date(), ZONE);
+    const currentTime = now.toTimeString().slice(0, 8); // Formato HH:MM:SS
+    const currentDate = now.toISOString().split('T')[0];
+    const appointmentDate = day ? new TZDate(day, ZONE).toISOString().split('T')[0] : null;
+    
+    // Validaciones de tiempo
+    // 1. Validar campos requeridos
+    if (!start_time || !end_time) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Por favor completa todos los campos de tiempo'
+      });
+    }
+
+    // 2. Validar fecha (si se proporciona)
+    if (day) {
+      const today = now ? new TZDate(now, ZONE).toISOString().split('T')[0] : null;
+      console.log("today hora actual",today)
+      // today.setHours(0, 0, 0, 0);
+      // const appointmentDay = new TZDate(day, ZONE);
+      console.log('appointmentDate - today',appointmentDate, today)
+      if (appointmentDate < today.internal) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'No se puede programar una cita en una fecha pasada'
+        });
+      }
+      
+      // 3. Si es el día actual, validar hora de inicio vs hora actual
+      if (appointmentDate === currentDate) {
+        const startTimeSec = timeToSeconds(start_time);
+        const currentTimeSec = timeToSeconds(currentTime);
+        
+        if (startTimeSec < currentTimeSec) {
+          return res.status(400).json({
+            status: 'error',
+            message: 'La hora de inicio no puede ser menor a la hora actual'
+          });
+        }
+      }
+    }
+    
+    // 4. Validar que la hora de inicio sea menor que la hora final
+    if (start_time && end_time) {
+      const startTimeSec = timeToSeconds(start_time);
+      const endTimeSec = timeToSeconds(end_time);
+      
+      if (startTimeSec > endTimeSec) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'La hora de inicio debe ser anterior a la hora final'
+        });
+      }
+    }
+    const dateToSave = new TZDate(`${day}T12:00:00`, ZONE);
+    console.log("dateToSave",dateToSave)
+    // Actualizar solo los campos permitidos
+    const updateData = {};
+    if (day) updateData.day = dateToSave;
+    if (start_time) updateData.start_time = start_time;
+    if (end_time) updateData.end_time = end_time;
+    if (status) updateData.status = status;
+    
+    // Validar que la cita no esté eliminada lógicamente
+    if (appointment.isDeleted) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'No se puede actualizar una cita eliminada'
+      });
+    }
+
+    await appointment.update(updateData);
+    
+    res.json({
+      status: 'success',
+      message: 'Cita actualizada exitosamente',
+      data: appointment
     });
-    res.json(phoneNumber);
+    
   } catch (error) {
-    console.log('error al actualizar numero de telefono', error);
-    res.status(500).json({ message: 'Error al actualizar el número de teléfono' });
+    console.error('Error al actualizar la cita:', error);
+    res.status(500).json({ 
+      status: 'error',
+      message: 'Error al actualizar la cita',
+      error: error.message 
+    });
   }
 });
 
-// Eliminar un número de teléfono
+// Eliminar un número de teléfono (eliminación lógica)
 router.delete('/:id', async (req, res) => {
   try {
-    const phoneNumber = await db.PhoneNumbers.findByPk(req.params.id);
+    const phoneNumber = await db.Appointment.findByPk(req.params.id);
     if (!phoneNumber) {
       return res.status(404).json({ message: 'Número de teléfono no encontrado' });
     }
-    await phoneNumber.destroy();
-    res.json({ message: 'Número de teléfono eliminado exitosamente' });
+    
+    // Actualizar el campo isDeleted a true en lugar de borrar
+    await phoneNumber.update({ 
+      isDeleted: true,
+      status: 'cancelado' // Opcional: también puedes actualizar el estado si lo deseas
+    });
+    
+    res.json({ 
+      message: 'Número de teléfono marcado como eliminado exitosamente',
+      data: phoneNumber
+    });
   } catch (error) {
-    console.log('error al eliminar numero de telefono', error);
-    res.status(500).json({ message: 'Error al eliminar el número de teléfono' });
+    console.error('Error al marcar como eliminado el número de teléfono:', error);
+    res.status(500).json({ 
+      message: 'Error al marcar como eliminado el número de teléfono',
+      error: error.message 
+    });
   }
 });
 

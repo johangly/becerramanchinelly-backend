@@ -32,6 +32,12 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       Comment: 'Estado de la reserva'
     },
+    isDeleted: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      Comment: '0 = activo, 1 = eliminado (soft delete)'
+    }
   }, {
     tableName: 'appointments',
     timestamps: true,
