@@ -5,6 +5,7 @@ import cors from 'cors';
 import logger from './utils/logger.js';
 import db from './database/index.js';
 import appointmentsRoutes from './routes/appointments.routes.js';
+import paymentsRoutes from './routes/payments.routes.js';
 
 const app = express();
 app.use(helmet());
@@ -16,6 +17,7 @@ const API_PREFIX = process.env.API_PREFIX || '/api';
 
 // Endpoint para enviar mensajes
 app.use(`${API_PREFIX}/appointments`, appointmentsRoutes);
+app.use(`${API_PREFIX}/payments`, paymentsRoutes);
 
 // Endpoint para verificar conexión
 app.get(`${API_PREFIX}/`, (req, res) => {

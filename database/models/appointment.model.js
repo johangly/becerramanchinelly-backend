@@ -43,6 +43,13 @@ export default (sequelize, DataTypes) => {
     timestamps: true,
   });
 
+  Appointment.associate = function(models) {
+    Appointment.hasMany(models.PaymentsAppointments, {
+      foreignKey: 'appointmentId',
+      as: 'paymentAppointments',
+    });
+  };
+
   return Appointment;
 }
 
