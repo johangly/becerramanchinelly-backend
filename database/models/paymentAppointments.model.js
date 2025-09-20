@@ -43,7 +43,7 @@ export default (sequelize) => {
 				allowNull: false,
 			},
 			currency: {
-				type: DataTypes.TEXT,
+				type: DataTypes.STRING,
 				allowNull: true,
 			},
 			transaction_date: {
@@ -67,7 +67,7 @@ export default (sequelize) => {
 				allowNull: true,
 			},
 			notes: {
-				type: DataTypes.TEXT,
+				type: DataTypes.STRING,
 				allowNull: true,
 			},
 			is_approved: {

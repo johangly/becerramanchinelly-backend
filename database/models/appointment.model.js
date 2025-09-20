@@ -37,6 +37,11 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: false,
       Comment: '0 = activo, 1 = eliminado (soft delete)'
+    },
+    price: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+      comment: 'Precio de la cita'
     }
   }, {
     tableName: 'appointments',
