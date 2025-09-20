@@ -36,7 +36,7 @@ async function loadAndAssociateModels() {
       );
     });
     console.log("Modelos cargados:")
-
+  console.log("modelFiles",modelFiles)
   for (const file of modelFiles) {
     const modelModule = await import(`./models/${file}`); // Importación dinámica asíncrona
     const modelDefinitionFunction = modelModule.default; // Accede al export default de la función del modelo
