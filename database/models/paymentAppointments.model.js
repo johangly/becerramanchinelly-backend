@@ -29,6 +29,10 @@ export default (sequelize) => {
 			payment_method_id: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
+				references: {
+					model: 'PaymentsMethods',
+					key: 'id',
+				},
 			},
 			amount: {
 				type: DataTypes.DECIMAL(10, 2),
