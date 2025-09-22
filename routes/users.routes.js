@@ -1,14 +1,14 @@
 // archivo donde se maneja la creacion de usuarios cuando clerk los cree
 import db from '../database/index.js';
 import { Webhook } from 'svix';
-import { Webhook as WebhookType } from '@clerk/clerk-sdk-node';
+//import { Webhook as WebhookType } from '@clerk/clerk-sdk-node';
 
 const { User } = db;
 
 export const handleClerkWebhook = async (req, res) => {
   try {
     const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
-    
+
     if (!WEBHOOK_SECRET) {
       throw new Error('CLERK_WEBHOOK_SECRET no está configurado');
     }
@@ -66,7 +66,7 @@ export const handleClerkWebhook = async (req, res) => {
         role: 'user' // Rol por defecto
       });
 
-      return res.status(200).json({ 
+      return res.status(200).json({
         success: true,
         message: created ? 'Usuario creado exitosamente' : 'Usuario actualizado exitosamente',
         user
@@ -76,9 +76,11 @@ export const handleClerkWebhook = async (req, res) => {
     res.status(200).json({ success: true, message: 'Evento recibido pero no procesado' });
   } catch (error) {
     console.error('Error en el webhook de Clerk:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: error.message || 'Error al procesar el webhook' 
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error al procesar el webhook'
     });
   }
 };
+
+export default handleClerkWebhook;

@@ -26,7 +26,7 @@ export default (sequelize) => {
 					key: 'id',
 				},
 			},
-			payment_method_id: {
+			paymentMethodId: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
 				references: {
@@ -46,7 +46,7 @@ export default (sequelize) => {
 				type: DataTypes.STRING,
 				allowNull: true,
 			},
-			transaction_date: {
+			transactionDate: {
 				type: DataTypes.DATE,
 				allowNull: false,
 			},
@@ -71,7 +71,7 @@ export default (sequelize) => {
 				allowNull: true,
 			},
 			is_approved: {
-				type: DataTypes.BOOLEAN,			
+				type: DataTypes.BOOLEAN,
 				allowNull: true,
 				defaultValue: false,
 			},
@@ -79,8 +79,6 @@ export default (sequelize) => {
 		{
 			tableName: 'PaymentsAppointments',
 			timestamps: true,
-			createdAt: 'created_at',
-			updatedAt: 'updated_at',
 		}
 	);
 

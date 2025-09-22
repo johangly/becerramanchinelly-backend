@@ -1,13 +1,10 @@
 import express from "express";
 import db from "../database/index.js";
 import { uploadArray } from "../utils/manageFiles.js";
-import { tr } from "zod/locales";
-import { create } from "domain";
-
 const router = express.Router();
 
 router.use(express.json());
-
+console.log('hola')
 // Create a new payment appointment
 router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 	const transaction = await db.sequelize.transaction();
@@ -27,11 +24,10 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 			appointment_id,
 			transactionDate,
 		} = formData;
-		console.log();
 		const paymentAppointment =
 			await db.PaymentsAppointments.create(
 				{
-					payment_method_id: 1,
+					paymentMethodId: 3,
 					status: "pendiente",
 					amount,
 					reference,
@@ -46,13 +42,14 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 						? parseInt(appointment_id)
 						: null,
 					is_approved: null,
-					transaction_date: transactionDate
+					transactionDate: transactionDate
 						? new Date(transactionDate)
 						: new Date(),
+					createdAt: new Date(),
+					updatedAt: new Date(),
 				},
 				{ transaction }
 			);
-		console.log(paymentAppointment);
 		const createImagePayment = await db.PaymentImages.create(
 			{
 				payment_id: paymentAppointment.id,
@@ -93,12 +90,10 @@ router.get("/:id", async (req, res) => {
 	try {
 		const { id } = req.params;
 		const paymentAppointment =
-			await db.PaymentsAppointments.findByPk(id,
-				{
-					include: {model: db.PaymentImages, as: 'payment_images'}
-				}
-			);
-
+			await db.PaymentsAppointments.findByPk(id);
+		const imageOfPayment = await db.PaymentImages.findAll({
+			where: { payment_id: paymentAppointment.id },
+		});
 		if (!paymentAppointment) {
 			return res.status(404).json({
 				status: "error",
@@ -108,7 +103,11 @@ router.get("/:id", async (req, res) => {
 
 		res.status(200).json({
 			status: "success",
-			data: paymentAppointment,
+			data: {
+				paymentAppointment,
+				imageOfPayment,
+
+			},
 		});
 	} catch (error) {
 		console.error("Error fetching payment appointment:", error);
