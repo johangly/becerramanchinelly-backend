@@ -6,8 +6,9 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
     },
     cleark_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       unique: true,
+      allowNull: false
     },
     name: {
       type: DataTypes.STRING,

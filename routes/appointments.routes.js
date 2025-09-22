@@ -103,7 +103,7 @@ router.get('/:id', async (req, res) => {
 // Crear una nueva cita
 router.post('/', async (req, res) => {
   try {
-    const { day, start_time, end_time, reservation, status } = req.body;
+    const { day, start_time, end_time, reservation, status,price } = req.body;
     
     // Validar campos requeridos
     if (!day || !start_time || !end_time) {
@@ -122,7 +122,8 @@ router.post('/', async (req, res) => {
       end_time: end_time,
       reservation: reservation || null,
       reservation_date: null, // Usamos la misma fecha para reservation_date
-      status: status || 'disponible'
+      status: status || 'disponible',
+      price: price || 0
     });
 
     res.status(201).json({
@@ -158,7 +159,7 @@ router.put('/:id', async (req, res) => {
       });
     }
 
-    const { day, start_time, end_time, status } = req.body;
+    const { day, start_time, end_time, status, price } = req.body;
     const now = new TZDate(new Date(), ZONE);
     const currentTime = now.toTimeString().slice(0, 8); // Formato HH:MM:SS
     const currentDate = now.toISOString().split('T')[0];
@@ -172,14 +173,16 @@ router.put('/:id', async (req, res) => {
         message: 'Por favor completa todos los campos de tiempo'
       });
     }
+    if (!price) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Por favor completa el campo de precio'
+      });
+    }
 
     // 2. Validar fecha (si se proporciona)
     if (day) {
       const today = now ? new TZDate(now, ZONE).toISOString().split('T')[0] : null;
-      console.log("today hora actual",today)
-      // today.setHours(0, 0, 0, 0);
-      // const appointmentDay = new TZDate(day, ZONE);
-      console.log('appointmentDate - today',appointmentDate, today)
       if (appointmentDate < today.internal) {
         return res.status(400).json({
           status: 'error',
@@ -221,6 +224,7 @@ router.put('/:id', async (req, res) => {
     if (start_time) updateData.start_time = start_time;
     if (end_time) updateData.end_time = end_time;
     if (status) updateData.status = status;
+    if (price) updateData.price = price;
     
     // Validar que la cita no esté eliminada lógicamente
     if (appointment.isDeleted) {

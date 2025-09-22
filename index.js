@@ -6,6 +6,8 @@ import logger from './utils/logger.js';
 import db from './database/index.js';
 import appointmentsRoutes from './routes/appointments.routes.js';
 import paymentsRoutes from './routes/payments.routes.js';
+import currenciesRoutes from './routes/currencies.routes.js';
+import usersRoutes from './routes/users.routes.js';
 
 const app = express();
 app.use(helmet());
@@ -18,6 +20,8 @@ const API_PREFIX = process.env.API_PREFIX || '/api';
 // Endpoint para enviar mensajes
 app.use(`${API_PREFIX}/appointments`, appointmentsRoutes);
 app.use(`${API_PREFIX}/payments`, paymentsRoutes);
+app.use(`${API_PREFIX}/currencies`, currenciesRoutes);
+app.use(`${API_PREFIX}/users`, usersRoutes);
 
 // Endpoint para verificar conexión
 app.get(`${API_PREFIX}/`, (req, res) => {
