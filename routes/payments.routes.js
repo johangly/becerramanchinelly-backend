@@ -15,16 +15,16 @@ const client = new paypal.core.PayPalHttpClient(environment);
 router.post('/', async (req, res) => {
   try {
     const { appointmentId, clientName, clientEmail } = req.body;
-    
+
     const appointment = await db.Appointment.findByPk(appointmentId);
     if (!appointment) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         status: 'error',
-        message: 'Cita no encontrada' 
+        message: 'Cita no encontrada'
       });
     }
 
-    
+
     const request = new paypal.orders.OrdersCreateRequest();
 
     request.requestBody({
@@ -60,14 +60,14 @@ router.post('/', async (req, res) => {
     console.log('response:',response);
     // const appointment = await db.Appointment.findByPk(appointmentId);
     // if (!appointment) {
-    //   return res.status(404).json({ 
+    //   return res.status(404).json({
     //     status: 'error',
-    //     message: 'Cita no encontrada' 
+    //     message: 'Cita no encontrada'
     //   });
     // }
     console.log('appointment conseguido:')
     // const createOrderRequest = new paypal.orders.OrdersCreateRequest();
-    
+
     // createOrderRequest.requestBody({
     //   intent: 'CAPTURE',
     //   purchase_units: [
@@ -84,9 +84,9 @@ router.post('/', async (req, res) => {
     //     cancel_url: `${process.env.FRONTEND_URL}/`,
     //   },
     // });
-    
+
     // const order = await client.execute(createOrderRequest);
-    
+
     res.status(201).json({
       status: 'success',
       id: response.result.id,
@@ -97,12 +97,21 @@ router.post('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error al procesar el pago:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       status: 'error',
       message: 'Error al procesar el pago',
-      error: error.message 
+      error: error.message
     });
   }
 });
+
+router.post('/manual-payment', async (req, res) => {
+  try {
+
+  } catch (error) {
+    
+  }
+})
+
 
 export default router;
