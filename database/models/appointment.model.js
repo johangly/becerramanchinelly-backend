@@ -37,6 +37,22 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: false,
       Comment: '0 = activo, 1 = eliminado (soft delete)'
+    },
+    price: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+      comment: 'Precio de la cita'
+    },
+    currency_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'ID de la moneda en la que se cobrará la cita',
+      references: {
+        model: 'Currencies',
+        key: 'id'
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'SET NULL'
     }
   }, {
     tableName: 'appointments',
@@ -45,8 +61,16 @@ export default (sequelize, DataTypes) => {
 
   Appointment.associate = function(models) {
     Appointment.hasMany(models.PaymentsAppointments, {
-      foreignKey: 'id',
+      foreignKey: 'appointment_id',
       as: 'PaymentAppointments',
+    });
+
+    // Relación con Currency
+    Appointment.belongsTo(models.Currency, {
+      foreignKey: 'currency_id',
+      as: 'currency',
+      onDelete: 'SET NULL',
+      onUpdate: 'CASCADE'
     });
   };
 

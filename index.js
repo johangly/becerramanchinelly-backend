@@ -8,6 +8,9 @@ import appointmentsRoutes from './routes/appointments.routes.js';
 import paymentsRoutes from './routes/payments.routes.js';
 import manualPaymentsRoutes from './routes/manualPaymentsAppointments.routes.js';
 import path from 'path';
+import currenciesRoutes from './routes/currencies.routes.js';
+import usersRoutes from './routes/users.routes.js';
+
 const app = express();
 app.use(helmet());
 app.use(cors());
@@ -23,6 +26,9 @@ const API_PREFIX = process.env.API_PREFIX || '/api';
 app.use(`${API_PREFIX}/appointments`, appointmentsRoutes);
 app.use(`${API_PREFIX}/payments`, paymentsRoutes);
 app.use(`${API_PREFIX}/manual-payments`, manualPaymentsRoutes);
+app.use(`${API_PREFIX}/currencies`, currenciesRoutes);
+app.use(`${API_PREFIX}/users`, usersRoutes);
+
 // Endpoint para verificar conexión
 app.get(`${API_PREFIX}/`, (req, res) => {
   res.json({ message: 'Bienvenido a la API' });

@@ -19,11 +19,8 @@ export default (sequelize, DataTypes) => {
     },
     file_name: {
       type: DataTypes.STRING,
+      allowNull: true,
       comment: 'Nombre original del archivo',
-    },
-    uploaded_by: {
-      type: DataTypes.INTEGER,
-      comment: 'Usuario que subió la imagen',
     },
     uploaded_at: {
       type: DataTypes.DATE,
@@ -46,12 +43,6 @@ export default (sequelize, DataTypes) => {
     PaymentImage.belongsTo(models.PaymentsAppointments, {
       foreignKey: 'payment_id',
       as: 'PaymentAppointment',
-    });
-
-    // Relación con User
-    PaymentImage.belongsTo(models.User, {
-      foreignKey: 'uploaded_by',
-      as: 'User',
     });
   };
 

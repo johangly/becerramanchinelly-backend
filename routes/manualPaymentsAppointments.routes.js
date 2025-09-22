@@ -95,7 +95,7 @@ router.get("/:id", async (req, res) => {
 		const paymentAppointment =
 			await db.PaymentsAppointments.findByPk(id,
 				{
-					include: {model: db., as: 'payment_images'}
+					include: {model: db.PaymentImages, as: 'payment_images'}
 				}
 			);
 
