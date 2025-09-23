@@ -8,19 +8,24 @@ export default (sequelize, DataTypes) => {
     cleark_id: {
       type: DataTypes.STRING,
       unique: true,
-      allowNull: false
+      allowNull: false,
+      comment: 'ID del usuario en Clerk',
     },
     name: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
+      comment: 'Nombre completo del usuario',
     },
     email: {
       type: DataTypes.STRING,
-      unique: true,
+      unique:true,
       allowNull: false,
     },
     role: {
       type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: 'user',
+      comment: 'Rol del usuario en la aplicación',
     },
   }, {
     tableName: 'users',
@@ -28,10 +33,12 @@ export default (sequelize, DataTypes) => {
   });
 
   User.associate = (models) => {
-    // Aquí puedes definir las asociaciones. Por ejemplo:
+    // Relación con notificaciones
     User.hasMany(models.Notification, {
       foreignKey: 'user_id',
-      as: 'Notifications',
+      as: 'notifications',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     });
   };
 

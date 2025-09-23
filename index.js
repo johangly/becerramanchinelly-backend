@@ -15,19 +15,20 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
 const uploadsDir = path.join(process.cwd(), 'uploads');
 
 app.use('/uploads', express.static(uploadsDir));
 
 const API_PREFIX = process.env.API_PREFIX || '/api';
 
-// Endpoint para enviar mensajes
+// Este endpoint no debe ir despues de express.json() 
+app.use(`${API_PREFIX}/users`, usersRoutes);
+
+app.use(express.json());
 app.use(`${API_PREFIX}/appointments`, appointmentsRoutes);
 app.use(`${API_PREFIX}/payments`, paymentsRoutes);
 app.use(`${API_PREFIX}/manual-payments`, manualPaymentsRoutes);
 app.use(`${API_PREFIX}/currencies`, currenciesRoutes);
-app.use(`${API_PREFIX}/users`, usersRoutes);
 
 // Endpoint para verificar conexión
 app.get(`${API_PREFIX}/`, (req, res) => {
