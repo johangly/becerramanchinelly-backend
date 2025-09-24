@@ -17,8 +17,13 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 const uploadsDir = path.join(process.cwd(), 'uploads');
 
-app.use('/uploads', express.static(uploadsDir));
-
+app.use('/uploads', express.static(uploadsDir,{
+   setHeaders: (res, path) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Content-Security-Policy', "img-src * data:;");
+  }
+}));
 const API_PREFIX = process.env.API_PREFIX || '/api';
 
 // Este endpoint no debe ir despues de express.json() 

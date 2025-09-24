@@ -1,10 +1,11 @@
 import express from "express";
 import db from "../database/index.js";
 import { uploadArray } from "../utils/manageFiles.js";
+import { createNotification } from "../utils/notificationHelper.js";
+import { da } from "zod/locales";
 const router = express.Router();
 
 router.use(express.json());
-console.log('hola')
 // Create a new payment appointment
 router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 	const transaction = await db.sequelize.transaction();
@@ -106,7 +107,6 @@ router.get("/:id", async (req, res) => {
 			data: {
 				paymentAppointment,
 				imageOfPayment,
-
 			},
 		});
 	} catch (error) {
@@ -120,7 +120,7 @@ router.get("/:id", async (req, res) => {
 });
 router.get("/", async (req, res) => {
 	try {
-		const response = await db.PaymentsAppointments.findAll	();
+		const response = await db.PaymentsAppointments.findAll();
 		res.status(200).json({
 			status: "success",
 			data: response,
@@ -140,24 +140,50 @@ router.put("/:id", async (req, res) => {
 	const transaction = await db.sequelize.transaction();
 	try {
 		const { id } = req.params;
-		const updates = req.body;
-
+		const status = req.body.status;
+		const isActive =
+			status === "completado"
+				? true
+				: status === "fallido"
+				? false
+				: null;
 		const paymentAppointment =
 			await db.PaymentsAppointments.findByPk(id);
-
 		if (!paymentAppointment) {
 			return res.status(404).json({
 				status: "error",
 				message: "Payment appointment not found",
 			});
 		}
-
-		await paymentAppointment.update(updates, { transaction });
-		await transaction.commit();
-
-		res.status(200).json({
+		const updatedPaymentAppointment =
+			await paymentAppointment.update({
+				status,
+				is_approved: true,
+				isActive,
+			});
+		if (
+			status &&
+			updatedPaymentAppointment.appointment_id
+		) {
+			const notification = await createNotification({
+				userId: updatedPaymentAppointment.user_id,
+				title: `Your payment is ${status}.`,
+				message: `Your payment has been updated to ${status}.`,
+				type:
+					status === "completado"
+						? "success"
+						: status === "fallido"
+						? "error"
+						: "other",
+				payment_id: updatedPaymentAppointment.id,
+			});
+			console.log("Notification created:", notification);
+		}
+		return res.status(200).json({
+			data: updatedPaymentAppointment,
 			status: "success",
-			data: paymentAppointment,
+			message:
+				"Notification created for payment status update.",
 		});
 	} catch (error) {
 		await transaction.rollback();
