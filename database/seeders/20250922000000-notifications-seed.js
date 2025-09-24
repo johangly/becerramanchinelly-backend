@@ -12,9 +12,9 @@ module.exports = {
         type: 'success',
         seen: false,
         user_id: 1,
-        payment_id: 123,
-        created_at: new Date('2025-09-22T10:30:00'),
-        updated_at: new Date('2025-09-22T10:30:00')
+        payment_id: 1,
+        createdAt: new Date('2025-09-22T10:30:00'),
+        updatedAt: new Date('2025-09-22T10:30:00')
       },
       // Notificación informativa (cita próxima)
       {
@@ -25,8 +25,8 @@ module.exports = {
         seen: false,
         user_id: 1,
         payment_id: null,
-        created_at: new Date('2025-09-22T09:15:00'),
-        updated_at: new Date('2025-09-22T09:15:00')
+        createdAt: new Date('2025-09-22T09:15:00'),
+        updatedAt: new Date('2025-09-22T09:15:00')
       },
       // Notificación de advertencia (recordatorio de pago)
       {
@@ -36,9 +36,9 @@ module.exports = {
         type: 'warning',
         seen: true,
         user_id: 1,
-        payment_id: 456,
-        created_at: new Date('2025-09-21T16:45:00'),
-        updated_at: new Date('2025-09-21T16:45:00')
+        payment_id: 1,
+        createdAt: new Date('2025-09-21T16:45:00'),
+        updatedAt: new Date('2025-09-21T16:45:00')
       },
       // Notificación de error (pago fallido)
       {
@@ -48,9 +48,9 @@ module.exports = {
         type: 'error',
         seen: false,
         user_id: 1,
-        payment_id: 789,
-        created_at: new Date('2025-09-21T14:20:00'),
-        updated_at: new Date('2025-09-21T14:20:00')
+        payment_id: 1,
+        createdAt: new Date('2025-09-21T14:20:00'),
+        updatedAt: new Date('2025-09-21T14:20:00')
       },
       // Otro tipo de notificación
       {
@@ -61,8 +61,8 @@ module.exports = {
         seen: true,
         user_id: 1,
         payment_id: null,
-        created_at: new Date('2025-09-20T18:30:00'),
-        updated_at: new Date('2025-09-20T18:30:00')
+        createdAt: new Date('2025-09-20T18:30:00'),
+        updatedAt: new Date('2025-09-20T18:30:00')
       },
       // Notificación de confirmación
       {
@@ -73,8 +73,8 @@ module.exports = {
         seen: false,
         user_id: 1,
         payment_id: null,
-        created_at: new Date('2025-09-20T11:10:00'),
-        updated_at: new Date('2025-09-20T11:10:00')
+        createdAt: new Date('2025-09-20T11:10:00'),
+        updatedAt: new Date('2025-09-20T11:10:00')
       }
     ], {});
   },
