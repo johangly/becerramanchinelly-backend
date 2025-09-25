@@ -21,19 +21,19 @@ const timeToSeconds = (timeStr) => {
 router.get('/', async (req, res) => {
   try {
     let startDate, endDate;
-    
+
     // Si se proporcionan fechas en la consulta, usarlas
     if (req.query.startDate && req.query.endDate) {
       startDate = new TZDate(req.query.startDate, ZONE);
       endDate = new TZDate(req.query.endDate, ZONE);
-      
+
       // Asegurarse de que las fechas sean válidas
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        return res.status(400).json({ 
-          message: 'Formato de fecha inválido. Use YYYY-MM-DD' 
+        return res.status(400).json({
+          message: 'Formato de fecha inválido. Use YYYY-MM-DD'
         });
       }
-      
+
       // Establecer la hora a mediodía para evitar problemas de zona horaria
       startDate = setHours(startDate, 0, 0, 0);
       endDate = setHours(endDate, 23, 59, 59); // Fin del día
@@ -42,11 +42,11 @@ router.get('/', async (req, res) => {
       const now = new TZDate(new Date(), ZONE);
       const currentDay = now.getDay();
       const diffDays = currentDay === 0 ? 1 : 1 - currentDay;
-      
+
       startDate = new TZDate(now);
       startDate.setDate(now.getDate() + diffDays);
       startDate = setHours(startDate, 0, 0, 0);
-      
+
       endDate = new TZDate(startDate);
       endDate.setDate(startDate.getDate() + 5);
       endDate = setHours(endDate, 23, 59, 59);
@@ -74,9 +74,9 @@ router.get('/', async (req, res) => {
 
   } catch (error) {
     console.error('Error al obtener las citas:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Error al obtener las citas',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -95,7 +95,7 @@ router.get('/:id', async (req, res) => {
       phoneNumber: phoneNumber
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       status: 'error',
       message: 'Error al obtener el número de teléfono' });
   }
@@ -105,7 +105,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { day, start_time, end_time, reservation, status,price } = req.body;
-    
+
     // Validar campos requeridos
     if (!day || !start_time || !end_time) {
       return res.status(400).json({
@@ -133,10 +133,10 @@ router.post('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error al crear la cita:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       status: 'error',
       message: 'Error al crear la cita',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -146,9 +146,9 @@ router.put('/:id', async (req, res) => {
   try {
     const appointment = await db.Appointment.findByPk(req.params.id);
     if (!appointment) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         status: 'error',
-        message: 'Cita no encontrada' 
+        message: 'Cita no encontrada'
       });
     }
 
@@ -165,7 +165,7 @@ router.put('/:id', async (req, res) => {
     const currentTime = now.toTimeString().slice(0, 8); // Formato HH:MM:SS
     const currentDate = now.toISOString().split('T')[0];
     const appointmentDate = day ? new TZDate(day, ZONE).toISOString().split('T')[0] : null;
-    
+
     // Validaciones de tiempo
     // 1. Validar campos requeridos
     if (!start_time || !end_time) {
@@ -190,12 +190,12 @@ router.put('/:id', async (req, res) => {
           message: 'No se puede programar una cita en una fecha pasada'
         });
       }
-      
+
       // 3. Si es el día actual, validar hora de inicio vs hora actual
       if (appointmentDate === currentDate) {
         const startTimeSec = timeToSeconds(start_time);
         const currentTimeSec = timeToSeconds(currentTime);
-        
+
         if (startTimeSec < currentTimeSec) {
           return res.status(400).json({
             status: 'error',
@@ -204,12 +204,12 @@ router.put('/:id', async (req, res) => {
         }
       }
     }
-    
+
     // 4. Validar que la hora de inicio sea menor que la hora final
     if (start_time && end_time) {
       const startTimeSec = timeToSeconds(start_time);
       const endTimeSec = timeToSeconds(end_time);
-      
+
       if (startTimeSec > endTimeSec) {
         return res.status(400).json({
           status: 'error',
@@ -226,7 +226,7 @@ router.put('/:id', async (req, res) => {
     if (end_time) updateData.end_time = end_time;
     if (status) updateData.status = status;
     if (price) updateData.price = price;
-    
+
     // Validar que la cita no esté eliminada lógicamente
     if (appointment.isDeleted) {
       return res.status(400).json({
@@ -236,19 +236,19 @@ router.put('/:id', async (req, res) => {
     }
 
     await appointment.update(updateData);
-    
+
     res.json({
       status: 'success',
       message: 'Cita actualizada exitosamente',
       data: appointment
     });
-    
+
   } catch (error) {
     console.error('Error al actualizar la cita:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       status: 'error',
       message: 'Error al actualizar la cita',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -260,22 +260,22 @@ router.delete('/:id', async (req, res) => {
     if (!phoneNumber) {
       return res.status(404).json({ message: 'Número de teléfono no encontrado' });
     }
-    
+
     // Actualizar el campo isDeleted a true en lugar de borrar
-    await phoneNumber.update({ 
+    await phoneNumber.update({
       isDeleted: true,
       status: 'cancelado' // Opcional: también puedes actualizar el estado si lo deseas
     });
-    
-    res.json({ 
+
+    res.json({
       message: 'Número de teléfono marcado como eliminado exitosamente',
       data: phoneNumber
     });
   } catch (error) {
     console.error('Error al marcar como eliminado el número de teléfono:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Error al marcar como eliminado el número de teléfono',
-      error: error.message 
+      error: error.message
     });
   }
 });
