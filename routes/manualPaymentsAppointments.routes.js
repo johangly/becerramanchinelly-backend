@@ -25,6 +25,15 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 			appointment_id,
 			transactionDate,
 		} = formData;
+		const user = await db.User.findAll({
+			where: { cleark_id: user_id },
+		});
+		if (user.length === 0) {
+			return res.status(404).json({
+				status: "error",
+				message: "User not found",
+			});
+		}
 		const paymentAppointment =
 			await db.PaymentsAppointments.create(
 				{
@@ -36,7 +45,7 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 					client_email,
 					client_phone,
 					notes,
-					user_id: 1,
+					user_id: user[0].id,
 					is_approved: null,
 					currency: "USD",
 					appointment_id: appointment_id
@@ -69,7 +78,11 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 			},
 			{ transaction }
 		);
-
+		const changeStatusOfAppointment = await db.Appointment.update(
+			{ status: "reservado" },
+			{ where: { id: appointment_id } }
+		);
+		console.log("changeStatusOfAppointment", changeStatusOfAppointment);
 		await transaction.commit();
 		res.status(201).json({
 			status: "success",
