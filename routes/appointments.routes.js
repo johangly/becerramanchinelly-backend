@@ -57,7 +57,8 @@ router.get('/', async (req, res) => {
         day: {
           [Op.gte]: startDate,
           [Op.lte]: endDate
-        }
+        },
+        isDeleted: false
       },
       order: [
         ['day', 'ASC'],
