@@ -12,6 +12,7 @@ const environment = new paypal.core.SandboxEnvironment(clientId, clientSecret);
 const client = new paypal.core.PayPalHttpClient(environment);
 
 // endpoint para procesar el pago con paypal de la cita
+
 router.post('/', async (req, res) => {
   try {
     const { appointmentId, clientName, clientEmail } = req.body;
@@ -109,7 +110,7 @@ router.post('/manual-payment', async (req, res) => {
   try {
 
   } catch (error) {
-    
+
   }
 })
 
