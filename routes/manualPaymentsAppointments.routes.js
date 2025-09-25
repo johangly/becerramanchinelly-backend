@@ -78,12 +78,12 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 			},
 			{ transaction }
 		);
-		const changeStatusOfAppointment = await db.Appointment.update(
-			{ status: "reservado" },
-			{ where: { id: appointment_id } }
-		);
-		console.log("changeStatusOfAppointment", changeStatusOfAppointment);
 		await transaction.commit();
+		const changeStatusOfAppointment = await db.Appointment.update(
+
+			{ status: "reservado" },
+			{ where: { id: paymentAppointment.appointment_id } }
+		);
 		res.status(201).json({
 			status: "success",
 			data: paymentAppointment,
