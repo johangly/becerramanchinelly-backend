@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "author": "Johangly sucre",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
