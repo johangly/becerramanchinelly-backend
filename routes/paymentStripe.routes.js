@@ -12,7 +12,6 @@ router.post("/create-checkout-session", async (req, res) => {
 		const { amount, success_url, cancel_url, appointmentId } =
 			req.body;
 
-		console.log(amount, success_url, cancel_url, appointmentId);
 		if(!amount || !appointmentId){
 			return res.status(400).json({
 				status: "error",
@@ -39,14 +38,12 @@ router.post("/create-checkout-session", async (req, res) => {
 			success_url: `${url}success?appointmentId=${appointmentId}&session_id={CHECKOUT_SESSION_ID}`,
 			cancel_url: `${url}canceled`,
 		});
-		console.log(session);
 		res.status(200).json({
 			status: "success",
 			sessionId: session.id,
 			url: session.url,
 		});
 	} catch (error) {
-		console.error("Error creating checkout session:", error);
 		res.status(500).json({
 			status: "error",
 			message: "Error creating checkout session",
@@ -72,7 +69,6 @@ router.get("/verify-session", async (req, res) => {
 			session,
 		});
 	} catch (error) {
-		console.error("Error verifying checkout session:", error);
 		res.status(500).json({
 			status: "error",
 			message: "Error verifying checkout session",
@@ -84,7 +80,6 @@ router.put('/updateStatus',async(req,res)=>{
 		const transaction = await db.sequelize.transaction();
 
 	const {appointmentId,user_id,amount,client_name,paymentId} = req.body;
-	console.log(appointmentId,user_id,amount,client_name,paymentId)
 		const user = await db.User.findAll({
 				where: { cleark_id: user_id },
 			});
@@ -95,7 +90,15 @@ router.put('/updateStatus',async(req,res)=>{
 				});
 			}
 			const transactionDate = new Date();
-
+		const verifyIfPaymentExists = await db.PaymentsAppointments.findOne({
+			where: { reference: paymentId },
+		});
+		if (verifyIfPaymentExists) {
+			return res.status(400).json({
+				status: "error",
+				message: "Payment already has registered",
+			});
+		}
 	try {
 		if(!appointmentId){
 			return res.status(400).json({

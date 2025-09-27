@@ -25,6 +25,7 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 			appointment_id,
 			transactionDate,
 		} = formData;
+		console.log(appointment_id)
 		const user = await db.User.findAll({
 			where: { cleark_id: user_id },
 		});
