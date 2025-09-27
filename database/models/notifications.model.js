@@ -28,6 +28,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    modalBody: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Contenido adicional para mostrar en un modal'
+    },
   }, {
     tableName: 'notifications',
     timestamps: true,

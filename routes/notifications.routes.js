@@ -6,7 +6,7 @@ router.use(express.json());
 
 router.get("/", async (req, res) => {
 	try {
-		const notifications = await db.Notifications.findAll({
+		const notifications = await db.Notification.findAll({
 			order: [["createdAt", "DESC"]],
 		});
 		res.json({ notifications });
@@ -18,8 +18,17 @@ router.get("/", async (req, res) => {
 router.get("/:userId", async (req, res) => {
 	const { userId } = req.params;
 	try {
-		const notifications = await db.Notifications.findAll({
-			where: { user_id: userId },
+		const user = await db.User.findOne({
+			where: { cleark_id: userId },
+		});
+		if (!user) {
+			return res.status(404).json({
+				status: "error",
+				message: "User not found",
+			});
+		}
+		const notifications = await db.Notification.findAll({
+			where: { user_id: user.id },
 			order: [["createdAt", "DESC"]],
 		});
 		res.json({ notifications });
@@ -28,3 +37,5 @@ router.get("/:userId", async (req, res) => {
 		res.status(500).json({ message: "Internal server error" });
 	}
 });
+
+export default router;

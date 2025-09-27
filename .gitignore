@@ -178,3 +178,7 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+
+# subida de imagenes
+uploads/*

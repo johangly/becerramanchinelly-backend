@@ -3,17 +3,21 @@ import db from "../database/index.js";
 import { uploadArray } from "../utils/manageFiles.js";
 import { createNotification } from "../utils/notificationHelper.js";
 import { da } from "zod/locales";
+import { TZDate } from "@date-fns/tz";
+
 const router = express.Router();
 
 router.use(express.json());
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ZONE = process.env.ZONE_TIME;
 // Create a new payment appointment
 router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 	const transaction = await db.sequelize.transaction();
 	try {
 		const formData = req.body;
 		const files = req.files;
-		console.log(files);
-		console.log(formData);
+
 		const {
 			amount,
 			reference,
@@ -25,7 +29,7 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 			appointment_id,
 			transactionDate,
 		} = formData;
-		console.log(appointment_id)
+		
 		const user = await db.User.findAll({
 			where: { cleark_id: user_id },
 		});
@@ -35,6 +39,7 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 				message: "User not found",
 			});
 		}
+
 		const paymentAppointment =
 			await db.PaymentsAppointments.create(
 				{
@@ -54,13 +59,15 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 						: null,
 					is_approved: null,
 					transactionDate: transactionDate
-						? new Date(transactionDate)
-						: new Date(),
-					createdAt: new Date(),
-					updatedAt: new Date(),
+						? new TZDate(transactionDate, ZONE).internal
+						: new TZDate(new Date(), ZONE).internal,
+					createdAt: new TZDate(new Date(), ZONE).internal,
+					updatedAt: new TZDate(new Date(), ZONE).internal,
 				},
 				{ transaction }
 			);
+
+		// guarda la informacion de la imagen y su ruta
 		const createImagePayment = await db.PaymentImages.create(
 			{
 				payment_id: paymentAppointment.id,
@@ -74,17 +81,57 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 						: null,
 				uploaded_by: 1,
 				is_active: true,
-				created_at: new Date(),
-				uploaded_at: new Date(),
+				created_at: new TZDate(new Date(), ZONE).internal,
+				uploaded_at: new TZDate(new Date(), ZONE).internal,
 			},
 			{ transaction }
 		);
-		await transaction.commit();
-		const changeStatusOfAppointment = await db.Appointment.update(
 
+		const appointmentToUpdate = await db.Appointment.update(
 			{ status: "reservado" },
-			{ where: { id: paymentAppointment.appointment_id } }
+			{ 
+				where: { id: paymentAppointment.appointment_id },
+				transaction
+			}
 		);
+		// Buscar al administrador
+		const adminUser = await db.User.findOne({
+			where: { email: ADMIN_EMAIL },
+			transaction
+		});
+
+		if(!adminUser){
+			return res.status(404).json({
+				status: "error",
+				message: "Admin user not found",
+			});
+		}
+
+		if (adminUser) {
+			// Crear notificación para el administrador
+			await db.Notification.create({
+				title: 'Nuevo pago pendiente por aprobar',
+				body: `Se ha recibido un pago por el monto de ${paymentAppointment.amount}$${user.name ? ` por el usuario ${user.name}` : ''}`,
+				type: 'success',
+				modalBody: `Se ha recibido un pago por el monto de ${paymentAppointment.amount}$${user.name ? ` por el usuario ${user.name}` : ''} para la fecha ${new TZDate(appointmentToUpdate.day, ZONE).internal} que inicia a las ${new TZDate(appointmentToUpdate.start_time, ZONE).internal} y termina a las ${new TZDate(appointmentToUpdate.end_time, ZONE).internal} 
+				| Nombre del cliente: ${client_name}
+				| Telefono del cliente: ${client_phone}
+				| Correo electrónico: ${client_email}
+				| Fecha de transacción: ${new TZDate(transactionDate, ZONE).internal} 
+				| Referencia: ${paymentAppointment.reference} 
+				| Monto del pago: ${paymentAppointment.amount} 
+				| Notas: ${notes}
+				| Metodo de pago: Pago Externo
+				`,
+				user_id: adminUser.id,
+				payment_id: paymentAppointment.id,
+				created_at: new TZDate(new Date(), ZONE).internal,
+				updated_at: new TZDate(new Date(), ZONE).internal
+			}, { transaction });
+		}
+
+		await transaction.commit();
+
 		res.status(201).json({
 			status: "success",
 			data: paymentAppointment,
@@ -159,8 +206,8 @@ router.put("/:id", async (req, res) => {
 			status === "completado"
 				? true
 				: status === "fallido"
-				? false
-				: null;
+					? false
+					: null;
 		const paymentAppointment =
 			await db.PaymentsAppointments.findByPk(id);
 		if (!paymentAppointment) {
@@ -187,8 +234,8 @@ router.put("/:id", async (req, res) => {
 					status === "completado"
 						? "success"
 						: status === "fallido"
-						? "error"
-						: "other",
+							? "error"
+							: "other",
 				payment_id: updatedPaymentAppointment.id,
 			});
 			console.log("Notification created:", notification);
