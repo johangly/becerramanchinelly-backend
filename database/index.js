@@ -2,9 +2,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url'; 
-import { Sequelize } from 'sequelize'; 
-import _config from './config/config.js'; 
+import { fileURLToPath } from 'url';
+import { Sequelize } from 'sequelize';
+import _config from './config/config.js';
 import runMigrations from './functions/executeMigrations.js'
 
 const __filename = fileURLToPath(import.meta.url);

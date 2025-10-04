@@ -11,7 +11,8 @@ router.post("/create-checkout-session", async (req, res) => {
 		const url = 'http://localhost:5173/'
 		const { amount, success_url, cancel_url, appointmentId } =
 			req.body;
-
+		const appointmentInfo = await db.Appointment.findByPk(appointmentId);
+		const currencyInfo = await db.Currency.findByPk(appointmentInfo?.currency_id);
 		if(!amount || !appointmentId){
 			return res.status(400).json({
 				status: "error",
@@ -25,7 +26,7 @@ router.post("/create-checkout-session", async (req, res) => {
 			line_items: [
 				{
 					price_data: {
-						currency: "usd",
+						currency: currencyInfo?.code,
 						product_data: {
 							name: "Asesoría Becerramanchinelly",
 						},
@@ -90,6 +91,9 @@ router.put('/updateStatus',async(req,res)=>{
 				});
 			}
 			const transactionDate = new Date();
+			const PaymentsMethods = await db.PaymentsMethods.findAll({
+				where: { name: "Stripe" },
+			});
 		const verifyIfPaymentExists = await db.PaymentsAppointments.findOne({
 			where: { reference: paymentId },
 		});
@@ -109,7 +113,7 @@ router.put('/updateStatus',async(req,res)=>{
 		const paymentAppointment =
 				await db.PaymentsAppointments.create(
 					{
-						paymentMethodId: 3,
+						paymentMethodId: PaymentsMethods[0].id,
 						status: "completado",
 						amount,
 						reference: paymentId,
@@ -180,5 +184,58 @@ router.put('/updateStatus',async(req,res)=>{
 		});
 	}
 });
+router.get("/", async (req, res) => {;
+	try {
+		const paymentMehtods = await db.PaymentsMethods.findAll({
+			where: { name: "Stripe" },
+		});
+		if (paymentMehtods.length === 0) {
+			return res.status(404).json({
+				status: "error",
+				message: "Payment methods not found",
+			});
+		}
+		const paymentsAppointments = await db.PaymentsAppointments.findAll({
+			where: { paymentMethodId: paymentMehtods[0].id },
 
+			order: [["createdAt", "DESC"]],
+		});
+		res.status(200).json({
+			paymentsAppointments,
+			status: "success",
+		});
+	} catch (error) {
+		console.error("Error retrieving payments appointments:", error);
+		res.status(500).json({
+			status: "error",
+			message: "Error retrieving payments appointments",
+			error: error.message,
+		});
+	}
+})
+
+router.get("/:id", async (req, res) => {
+	const { id } = req.params;
+	console.log(id)
+	try {
+		const paymentAppointment = await db.PaymentsAppointments.findByPk(id);
+		if (!paymentAppointment) {
+			return res.status(404).json({
+				status: "error",
+				message: "Payment appointment not found",
+			});
+		}
+		res.status(200).json({
+			paymentAppointment,
+			status: "success",
+		});
+	} catch (error) {
+		console.error("Error retrieving payment appointment:", error);
+		res.status(500).json({
+			status: "error",
+			message: "Error retrieving payment appointment",
+			error: error.message,
+		});
+	}
+});
 export default router;

@@ -3,6 +3,7 @@ import db from '../database/index.js';
 import { Op } from 'sequelize';
 import { TZDate } from "@date-fns/tz";
 import { format, setHours, isSameDay } from 'date-fns';
+import { de } from 'zod/v4/locales';
 // Configura Multer para guardar el archivo en memoria.
 // Esto es ideal para archivos pequeños como el que describes.
 const router = express.Router();
@@ -80,7 +81,32 @@ router.get('/', async (req, res) => {
     });
   }
 });
-
+router.get('/user/:clearkId', async (req, res) => {
+  try {
+    const { clearkId } = req.params;
+    console.log(clearkId)
+    const userByClerkId = await db.User.findOne({
+      where: { cleark_id: clearkId }
+    });
+    const paymentsOfUser = await db.PaymentsAppointments.findAll({
+      where: { user_id: userByClerkId.id },
+      include: [
+        { model: db.Appointment, as: 'Appointment' }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    res.json({
+      status: 'success',
+      paymentsOfUser: paymentsOfUser
+    });
+  } catch (error) {
+    console.error('Error al obtener las citas del usuario:', error);
+    res.status(500).json({
+      message: 'Error al obtener las citas del usuario',
+      error: error.message
+    });
+  }
+});
 // Obtener un número de teléfono por ID
 router.get('/:id', async (req, res) => {
   try {
@@ -106,11 +132,24 @@ router.post('/', async (req, res) => {
   try {
     const { day, start_time, end_time, reservation, status,price } = req.body;
 
+    const defaultCurrencySystem = await db.Configuration.findAll({
+      where: { key: 'currency' }
+    })
+    const currencyId = await db.Currency.findOne({
+      where: {  code : defaultCurrencySystem[0]?.value }
+    })
+
     // Validar campos requeridos
     if (!day || !start_time || !end_time) {
       return res.status(400).json({
         status: 'error',
         message: 'Los campos day, start_time y end_time son obligatorios'
+      });
+    }
+    if(!defaultCurrencySystem || defaultCurrencySystem.length===0){
+      return res.status(500).json({
+        status: 'error',
+        message: 'No hay una moneda por defecto configurada en el sistema. Por favor, configura una moneda antes de crear una cita.'
       });
     }
 
@@ -124,7 +163,9 @@ router.post('/', async (req, res) => {
       reservation: reservation || null,
       reservation_date: null, // Usamos la misma fecha para reservation_date
       status: status || 'disponible',
-      price: price || 0
+      price: price || 0,
+      currency_id: currencyId.id,
+
     });
 
     res.status(201).json({
@@ -278,6 +319,38 @@ router.delete('/:id', async (req, res) => {
       error: error.message
     });
   }
+});
+router.put('/update-appointment-platform/:id', async (req, res) => {
+  const {id}= req.params;
+  const {meetingPlatformId}= req.body;
+
+  try {
+    const appointment = await db.Appointment.findByPk(id);
+    if (!appointment) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Cita no encontrada'
+      });
+    }
+    await appointment.update({
+      meetingPlatformId: meetingPlatformId
+    });
+    res.json({
+      status: 'success',
+
+      message: 'Cita actualizada exitosamente',
+
+       appointment
+    });
+}catch (error) {
+    console.error('Error al actualizar la cita:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error al actualizar la cita',
+      error: error.message
+    });
+  }
+
 });
 
 export default router;

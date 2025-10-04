@@ -14,10 +14,13 @@ import configRoutes from './routes/config.routes.js';
 import paymentsMethodsRoutes from './routes/paymentsMethods.routes.js';
 import paymentStripeRoutes from './routes/paymentStripe.routes.js';
 import notificationsRoutes from './routes/notifications.routes.js';
+import meettingsRoutes from './routes/mettings.routes.js';
+import generateLinkRoutes from './routes/generateLink.routes.js';
 const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
+app.use
 const uploadsDir = path.join(process.cwd(), 'uploads');
 
 app.use('/uploads', express.static(uploadsDir,{
@@ -41,6 +44,8 @@ app.use(`${API_PREFIX}/config`, configRoutes);
 app.use(`${API_PREFIX}/payment-methods`, paymentsMethodsRoutes);
 app.use(`${API_PREFIX}/payment-stripe`,paymentStripeRoutes);
 app.use(`${API_PREFIX}/notifications`, notificationsRoutes);
+app.use(`${API_PREFIX}/meetings`, meettingsRoutes);
+app.use(`${API_PREFIX}/generate-link`, generateLinkRoutes);
 // Endpoint para verificar conexión
 app.get(`${API_PREFIX}/`, (req, res) => {
   res.json({ message: 'Bienvenido a la API' });

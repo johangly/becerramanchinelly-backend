@@ -5,10 +5,10 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
 	try {
-		const configs = await db.Config.findAll();
+		const configs = await db.Configuration.findAll();
 		res.status(200).json({
 			status: "success",
-			data: configs,
+			configs,
 		});
 	} catch (error) {
 		console.error("Error fetching configs:", error);
@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
 	try {
 		const { id } = req.params;
-		const config = await db.Config.findByPk(id);
+		const config = await db.Configuration.findByPk(id);
 		if (!config) {
 			return res.status(404).json({
 				status: "error",
@@ -47,7 +47,7 @@ router.put('/:id', async (req, res) => {
 	try {
 		const { id } = req.params;
 		const { newValues } = req.body;
-		const config = await db.Config.findByPk(id);
+		const config = await db.Configuration.findByPk(id);
 		if (!config) {
 			return res.status(404).json({
 				status: "error",

@@ -106,11 +106,47 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.post('/manual-payment', async (req, res) => {
+router.delete('/delete-payment/:id', async (req, res) => {
   try {
+    const { id } = req.params;
+    const payment = await db.PaymentsAppointments.findAll({
+      where: { id }
+    });
+    console.log(payment)
+    if(payment[0].status==='reembolso' || payment[0].status==='reembolsado'){
+      return res.status(400).json({
+        status: 'error',
+        message: 'Payment already refunded'
+      });
+    }
+    if (!payment) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Payment not found'
+      });
+    }
+    const paymentDeleted = await db.PaymentsAppointments.update({
+      status: 'reembolso'
+    }, {
+      where: { id: id }
+    });
+    const updatedStatusAppointment = await db.Appointment.update({
+      status: 'disponible'
+    }, {
+      where: { id: payment[0].appointment_id }
+    });
 
+    res.status(200).json({
+      status: 'success',
+      message: 'Payment deleted successfully'
+    });
   } catch (error) {
-
+    console.error('Error deleting payment:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error deleting payment',
+      error: error.message
+    });
   }
 })
 

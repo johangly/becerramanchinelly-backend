@@ -1,16 +1,12 @@
 import db from '../database/index.js';
 
-const { Currency } = db;
-
 // Obtener todas las monedas
 export const getAllCurrencies = async (req, res) => {
   try {
-    const currencies = await Currency.findAll({
-      order: [['is_default', 'DESC'], ['code', 'ASC']]
-    });
+    const currencies = await db.Currency.findAll()
     res.status(200).json({
       status: 'success',
-      data: currencies
+      currencies
     });
   } catch (error) {
     console.error('Error al obtener monedas:', error);
@@ -53,7 +49,7 @@ export const getActiveCurrency = async (req, res) => {
 // Cambiar moneda activa
 export const setActiveCurrency = async (req, res) => {
   const { id } = req.params;
-  
+
   if (!id) {
     return res.status(400).json({
       status: 'error',
@@ -62,11 +58,11 @@ export const setActiveCurrency = async (req, res) => {
   }
 
   const transaction = await db.sequelize.transaction();
-  
+
   try {
     // Verificar si la moneda existe
     const currency = await Currency.findByPk(id, { transaction });
-    
+
     if (!currency) {
       await transaction.rollback();
       return res.status(404).json({
@@ -101,7 +97,7 @@ export const setActiveCurrency = async (req, res) => {
 
     // Obtener la moneda actualizada
     const updatedCurrency = await Currency.findByPk(id);
-    
+
     res.status(200).json({
       status: 'success',
       message: 'Moneda activada correctamente',
@@ -123,14 +119,14 @@ export const getCurrencyById = async (req, res) => {
   try {
     const { id } = req.params;
     const currency = await Currency.findByPk(id);
-    
+
     if (!currency) {
       return res.status(404).json({
         status: 'error',
         message: 'Moneda no encontrada'
       });
     }
-    
+
     res.status(200).json({
       status: 'success',
       data: currency

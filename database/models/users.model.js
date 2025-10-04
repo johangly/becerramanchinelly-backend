@@ -27,6 +27,11 @@ export default (sequelize, DataTypes) => {
       defaultValue: 'user',
       comment: 'Rol del usuario en la aplicación',
     },
+    hash_google_meet: {
+      type: DataTypes.STRING(512),
+      allowNull: true,
+      comment: 'Hash para autenticación con Google Meet'
+    },
   }, {
     tableName: 'users',
     timestamps: true,

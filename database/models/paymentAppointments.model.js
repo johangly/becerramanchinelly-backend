@@ -39,7 +39,7 @@ export default (sequelize) => {
 				allowNull: false,
 			},
 			status: {
-				type: DataTypes.ENUM('pendiente', 'completado', 'fallido'),
+				type: DataTypes.ENUM('pendiente', 'completado', 'fallido', 'refund', 'refunded'),
 				allowNull: false,
 			},
 			currency: {

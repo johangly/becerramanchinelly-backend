@@ -29,10 +29,22 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 			appointment_id,
 			transactionDate,
 		} = formData;
-		
+
 		const user = await db.User.findAll({
 			where: { cleark_id: user_id },
 		});
+		const appointment = await db.Appointment.findAll({
+			where: { id: appointment_id },
+		});
+		const PaymentsMethods = await db.PaymentsMethods.findAll({
+						where: { name: "Pago Externo" },
+					});
+		if(appointment[0].status === 'reservado'){
+			return res.status(400).json({
+				status: "error",
+				message: "Appointment is already booked",
+			});
+		}
 		if (user.length === 0) {
 			return res.status(404).json({
 				status: "error",
@@ -43,7 +55,7 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 		const paymentAppointment =
 			await db.PaymentsAppointments.create(
 				{
-					paymentMethodId: 3,
+					paymentMethodId: PaymentsMethods[0].id,
 					status: "pendiente",
 					amount,
 					reference,
@@ -89,7 +101,7 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 
 		const appointmentToUpdate = await db.Appointment.update(
 			{ status: "reservado" },
-			{ 
+			{
 				where: { id: paymentAppointment.appointment_id },
 				transaction
 			}
@@ -106,6 +118,7 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 				message: "Admin user not found",
 			});
 		}
+		await transaction.commit();
 
 		if (adminUser) {
 			// Crear notificación para el administrador
@@ -113,13 +126,13 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 				title: 'Nuevo pago pendiente por aprobar',
 				body: `Se ha recibido un pago por el monto de ${paymentAppointment.amount}$${user.name ? ` por el usuario ${user.name}` : ''}`,
 				type: 'success',
-				modalBody: `Se ha recibido un pago por el monto de ${paymentAppointment.amount}$${user.name ? ` por el usuario ${user.name}` : ''} para la fecha ${new TZDate(appointmentToUpdate.day, ZONE).internal} que inicia a las ${new TZDate(appointmentToUpdate.start_time, ZONE).internal} y termina a las ${new TZDate(appointmentToUpdate.end_time, ZONE).internal} 
+				modalBody: `Se ha recibido un pago por el monto de ${paymentAppointment.amount}$${user.name ? ` por el usuario ${user.name}` : ''} para la fecha ${new TZDate(appointmentToUpdate.day, ZONE).internal} que inicia a las ${new TZDate(appointmentToUpdate.start_time, ZONE).internal} y termina a las ${new TZDate(appointmentToUpdate.end_time, ZONE).internal}
 				| Nombre del cliente: ${client_name}
 				| Telefono del cliente: ${client_phone}
 				| Correo electrónico: ${client_email}
-				| Fecha de transacción: ${new TZDate(transactionDate, ZONE).internal} 
-				| Referencia: ${paymentAppointment.reference} 
-				| Monto del pago: ${paymentAppointment.amount} 
+				| Fecha de transacción: ${new TZDate(transactionDate, ZONE).internal}
+				| Referencia: ${paymentAppointment.reference}
+				| Monto del pago: ${paymentAppointment.amount}
 				| Notas: ${notes}
 				| Metodo de pago: Pago Externo
 				`,
@@ -127,10 +140,9 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 				payment_id: paymentAppointment.id,
 				created_at: new TZDate(new Date(), ZONE).internal,
 				updated_at: new TZDate(new Date(), ZONE).internal
-			}, { transaction });
+			});
 		}
 
-		await transaction.commit();
 
 		res.status(201).json({
 			status: "success",
@@ -181,7 +193,12 @@ router.get("/:id", async (req, res) => {
 });
 router.get("/", async (req, res) => {
 	try {
-		const response = await db.PaymentsAppointments.findAll();
+		const paymentMethod = await db.PaymentsMethods.findAll({
+			where: { name: "Pago Externo" },
+		});
+		const response = await db.PaymentsAppointments.findAll({
+			where: { paymentMethodId: paymentMethod[0].id },
+		});
 		res.status(200).json({
 			status: "success",
 			data: response,

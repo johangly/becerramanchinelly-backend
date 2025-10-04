@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
   const Appointment = sequelize.define('Appointment', {
-    id: { 
+    id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
@@ -53,7 +53,23 @@ export default (sequelize, DataTypes) => {
       },
       onUpdate: 'CASCADE',
       onDelete: 'SET NULL'
-    }
+    },
+    meetingPlatformId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'MeetingPlatforms',
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'SET NULL',
+      comment: 'ID de la plataforma de reunión (Zoom, Meet, etc.)'
+    },
+    meeting_link: {
+      type: DataTypes.STRING(512),
+      allowNull: true,
+      comment: 'Enlace a la reunión (Zoom, Meet, Teams, etc.)'
+    },
   }, {
     tableName: 'appointments',
     timestamps: true,
@@ -69,6 +85,14 @@ export default (sequelize, DataTypes) => {
     Appointment.belongsTo(models.Currency, {
       foreignKey: 'currency_id',
       as: 'currency',
+      onDelete: 'SET NULL',
+      onUpdate: 'CASCADE'
+    });
+
+    // Relación con MeetingPlatform
+    Appointment.belongsTo(models.MeetingPlatforms, {
+      foreignKey: 'meetingPlatformId',
+      as: 'meetingPlatform',
       onDelete: 'SET NULL',
       onUpdate: 'CASCADE'
     });

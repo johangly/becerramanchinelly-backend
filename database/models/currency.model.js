@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
   const Currency = sequelize.define('Currency', {
-    id: { 
+    id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
@@ -42,7 +42,6 @@ export default (sequelize, DataTypes) => {
   }, {
     tableName: 'Currencies',
     timestamps: true,
-    underscored: true,
     comment: 'Tabla de monedas soportadas por el sistema'
   });
 
