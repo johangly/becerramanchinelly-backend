@@ -65,11 +65,20 @@ router.post("/generate-meet-link/:id", async (req, res) => {
 			link: event.data.hangoutLink,
 		});
 	} catch (error) {
-		console.error("Error generating link:", error);
+		  if (error.message && error.message.includes('invalid_grant')) {
+			res.redirect('/api/generate-link/auth'
+
+			);
+		}else{
+console.error("Error generating link:", error);
 		res.status(500).json({
 			error: "Error generating link",
 			message: error.message,
 		});
+
+		}
+
+
 	}
 });
 router.put("/save-meet-link/:id", async (req, res) => {
