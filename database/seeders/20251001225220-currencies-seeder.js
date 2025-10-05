@@ -19,6 +19,13 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date()
       },
+      {
+        key:'priceAppointment',
+        value: '20.00',
+        description: 'Precio por defecto de las citas',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
     ], {});
 
     // Asegurarse de que solo una moneda sea la predeterminada
