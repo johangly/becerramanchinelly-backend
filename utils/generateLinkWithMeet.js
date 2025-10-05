@@ -1,7 +1,9 @@
 import { google } from 'googleapis';
 
+const API_PREFIX = process.env.API_PREFIX;
+
 export async function generateLinkWithMeet(startTime,endTime,){
-        const oAuth2Client = new google.auth.OAuth2('362384645885-6uthr6qcq6rtg403hqt1cfms80mcu4f2.apps.googleusercontent.com', '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',  "http://localhost:3000/api/generate-link/oauth2callback"
+    const oAuth2Client = new google.auth.OAuth2('362384645885-6uthr6qcq6rtg403hqt1cfms80mcu4f2.apps.googleusercontent.com', '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', `http://localhost:3000${API_PREFIX}/generate-link/oauth2callback`
 );
         const scopes = ["https://www.googleapis.com/auth/calendar.events"];
         const authUrl = oAuth2Client.generateAuthUrl({
