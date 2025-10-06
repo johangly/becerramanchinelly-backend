@@ -62,16 +62,26 @@ router.post("/generate-meet-link/:id", async (req, res) => {
 			},
 			conferenceDataVersion: 1,
 		});
+		console.log(event.data)
 		res.status(200).json({
 			status: "success",
 			link: event.data.hangoutLink,
 		});
 	} catch (error) {
-		console.error("Error generating link:", error);
+		  if (error.message && error.message.includes('invalid_grant')) {
+			res.redirect('/api/generate-link/auth'
+
+			);
+		}else{
+console.error("Error generating link:", error);
 		res.status(500).json({
 			error: "Error generating link",
 			message: error.message,
 		});
+
+		}
+
+
 	}
 });
 router.put("/save-meet-link/:id", async (req, res) => {
@@ -122,8 +132,8 @@ router.get("/oauth2callback", async (req, res) => {
 
     if (window.opener) {
           window.opener.postMessage({ success: true }, "*");
-        }
-        setTimeout(() => window.close(), 2000);
+		  }
+		  setTimeout(() => window.close(), 2000);
 </script>
           <p>Autenticación exitosa. Puedes cerrar esta ventana.</p>
         </body>
