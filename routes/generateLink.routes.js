@@ -2,10 +2,12 @@ import db from "../database/index.js";
 import express from "express";
 import { google } from "googleapis";
 
+const API_PREFIX = process.env.API_PREFIX;
+
 const oAuth2Client = new google.auth.OAuth2(
 	"362384645885-6uthr6qcq6rtg403hqt1cfms80mcu4f2.apps.googleusercontent.com",
 	"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",
-	"http://localhost:3000/api/generate-link/oauth2callback"
+	`http://localhost:3000${API_PREFIX}/generate-link/oauth2callback`
 );
 
 const router = express.Router();
