@@ -3,7 +3,7 @@ import db from "../database/index.js";
 import { uploadArray } from "../utils/manageFiles.js";
 import { createNotification } from "../utils/notificationHelper.js";
 import { TZDate } from "@date-fns/tz";
-import { logger } from "../utils/logger.js";
+import logger from "../utils/logger.js";
 
 const router = express.Router();
 
