@@ -7,7 +7,7 @@ const url = process.env.URL_BACKEND_LINK || `http://localhost:3000${API_PREFIX}`
 const oAuth2Client = new google.auth.OAuth2(
 	"362384645885-6uthr6qcq6rtg403hqt1cfms80mcu4f2.apps.googleusercontent.com",
 	"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",
-	`${url}generate-link/oauth2callback`
+	`${url}/generate-link/oauth2callback`
 );
 
 const router = express.Router();
