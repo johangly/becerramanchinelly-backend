@@ -20,6 +20,11 @@ const app = express();
 app.use(helmet());
 app.use(cors({
   origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(helmet({
+  crossOriginResourcePolicy: false,
 }));
 app.use(express.urlencoded({ extended: true }));
 app.use
