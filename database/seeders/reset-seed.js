@@ -12,7 +12,9 @@ export default {
     await queryInterface.bulkDelete('PaymentsAppointments', null, { truncate: true, cascade: true, restartIdentity: true });
     await queryInterface.bulkDelete('paymentImages', null, { truncate: true, cascade: true, restartIdentity: true });
     await queryInterface.bulkDelete('users', null, { truncate: true, cascade: true, restartIdentity: true });
-    
+    await queryInterface.bulkDelete('Currencies', null, { truncate: true, cascade: true, restartIdentity: true });
+    await queryInterface.bulkDelete('PaymentsMethods', null, { truncate: true, cascade: true, restartIdentity: true });
+    await queryInterface.bulkDelete('Configurations', null, { truncate: true, cascade: true, restartIdentity: true });
     // Reactivar las restricciones de clave foránea
     await queryInterface.sequelize.query('SET FOREIGN_KEY_CHECKS = 1', null);
   },
