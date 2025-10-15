@@ -5,10 +5,10 @@ import { createNotification } from "../utils/notificationHelper.js";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // Instancia de Stripe
-
+const URL_FRONTEND = process.env.URL_FRONTEND || 'http://localhost:5173';
 router.post("/create-checkout-session", async (req, res) => {
 	try {
-		const url = 'http://localhost:5173/'
+		const url = URL_FRONTEND;
 		const { amount, success_url, cancel_url, appointmentId } =
 			req.body;
 		const appointmentInfo = await db.Appointment.findByPk(appointmentId);
