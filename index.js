@@ -53,6 +53,7 @@ app.use(`${API_PREFIX}/payment-stripe`,paymentStripeRoutes);
 app.use(`${API_PREFIX}/notifications`, notificationsRoutes);
 app.use(`${API_PREFIX}/meetings`, meettingsRoutes);
 app.use(`${API_PREFIX}/generate-link`, generateLinkRoutes);
+app.use(`${API_PREFIX}/uploads`, express.static('uploads'));
 // Endpoint para verificar conexión
 app.get(`${API_PREFIX}/`, (req, res) => {
   res.json({ message: 'Bienvenido a la API' });
