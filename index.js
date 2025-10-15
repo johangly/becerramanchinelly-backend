@@ -18,7 +18,9 @@ import meettingsRoutes from './routes/mettings.routes.js';
 import generateLinkRoutes from './routes/generateLink.routes.js';
 const app = express();
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: '*',
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use
 const uploadsDir = path.join(process.cwd(), 'uploads');
