@@ -17,7 +17,6 @@ import notificationsRoutes from './routes/notifications.routes.js';
 import meettingsRoutes from './routes/mettings.routes.js';
 import generateLinkRoutes from './routes/generateLink.routes.js';
 const app = express();
-app.use(helmet());
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -27,16 +26,15 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
 app.use(express.urlencoded({ extended: true }));
-app.use
-const uploadsDir = path.join(process.cwd(), 'uploads');
+// const uploadsDir = path.join(process.cwd(), 'uploads');
 
-app.use('/uploads', express.static(uploadsDir,{
-   setHeaders: (res, path) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.setHeader('Content-Security-Policy', "img-src * data:;");
-  }
-}));
+// app.use('/uploads', express.static(uploadsDir,{
+//    setHeaders: (res, path) => {
+//     res.setHeader('Access-Control-Allow-Origin', '*');
+//     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+//     res.setHeader('Content-Security-Policy', "img-src * data:;");
+//   }
+// }));
 const API_PREFIX = process.env.API_PREFIX || '/api';
 
 // Este endpoint no debe ir despues de express.json()
