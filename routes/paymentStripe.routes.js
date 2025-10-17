@@ -11,9 +11,11 @@ router.post("/create-checkout-session", async (req, res) => {
 		const url = URL_FRONTEND;
 		const { amount, success_url, cancel_url, appointmentId } =
 			req.body;
+			console.log(url)
 		const appointmentInfo = await db.Appointment.findByPk(appointmentId);
 		const currencyInfo = await db.Currency.findByPk(appointmentInfo?.currency_id);
 		if(!amount || !appointmentId){
+			console.log(appointmentId)
 			return res.status(400).json({
 				status: "error",
 				message: "Missing required fields: amount, appointmentId"
@@ -36,15 +38,17 @@ router.post("/create-checkout-session", async (req, res) => {
 				},
 			],
 			mode: "payment",
-			success_url: `${url}success?appointmentId=${appointmentId}&session_id={CHECKOUT_SESSION_ID}`,
-			cancel_url: `${url}canceled`,
+			success_url: `${url}/success?appointmentId=${appointmentId}&session_id={CHECKOUT_SESSION_ID}`,
+			cancel_url: `${url}/canceled`,
 		});
+		console.log(session)
 		res.status(200).json({
 			status: "success",
 			sessionId: session.id,
 			url: session.url,
 		});
 	} catch (error) {
+		console.log(error)
 		res.status(500).json({
 			status: "error",
 			message: "Error creating checkout session",

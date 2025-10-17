@@ -3,7 +3,9 @@ import express from "express";
 import { google } from "googleapis";
 
 const API_PREFIX = process.env.API_PREFIX;
-const url = process.env.URL_BACKEND_LINK || `http://localhost:3000${API_PREFIX}`;
+const url =
+	process.env.URL_BACKEND_LINK ||
+	`http://localhost:3000${API_PREFIX}`;
 const oAuth2Client = new google.auth.OAuth2(
 	"362384645885-6uthr6qcq6rtg403hqt1cfms80mcu4f2.apps.googleusercontent.com",
 	"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",
@@ -22,12 +24,22 @@ router.get("/auth", (req, res) => {
 router.post("/generate-meet-link/:id", async (req, res) => {
 	try {
 		const { id } = req.params;
-		const code = db.User.findAll({
+		const user = await db.User.findOne({
 			where: { email: process.env.ADMIN_EMAIL },
 			attributes: ["hash_google_meet"],
 		});
+		// Si no existe el usuario o el hash_google_meet está vacío/null, redirige a auth
+		if (!user || !user.hash_google_meet) {
+			console.log("ola");
+			return res
+				.status(200)
+				.json({
+					link: "/generate-link/auth",
+					status: "redirect",
+				});
+		}
 		oAuth2Client.setCredentials({
-			refresh_token: (await code)[0].hash_google_meet,
+			refresh_token: user.hash_google_meet,
 		});
 		const infoAppointment = await db.Appointment.findByPk(id);
 		if (!infoAppointment) {
@@ -36,10 +48,26 @@ router.post("/generate-meet-link/:id", async (req, res) => {
 				.json({ error: "Appointment not found" });
 		}
 		const year = new Date(infoAppointment.day).getFullYear();
-		const month = new Date(infoAppointment.day).getMonth() + 1; // Los meses son 0-indexados
+		const month = new Date(infoAppointment.day).getMonth() + 1;
 		const day = new Date(infoAppointment.day).getDate();
-		const startTime = year+'-'+(month<10?'0'+month:month)+'-'+(day<10?'0'+day:day)+'T'+infoAppointment.start_time+"-00:00"
-		const endTime = year+'-'+(month<10?'0'+month:month)+'-'+(day<10?'0'+day:day)+'T'+infoAppointment.end_time+"-00:00"
+		const startTime =
+			year +
+			"-" +
+			(month < 10 ? "0" + month : month) +
+			"-" +
+			(day < 10 ? "0" + day : day) +
+			"T" +
+			infoAppointment.start_time +
+			"-00:00";
+		const endTime =
+			year +
+			"-" +
+			(month < 10 ? "0" + month : month) +
+			"-" +
+			(day < 10 ? "0" + day : day) +
+			"T" +
+			infoAppointment.end_time +
+			"-00:00";
 		const calendar = google.calendar({
 			version: "v3",
 			auth: oAuth2Client,
@@ -48,11 +76,13 @@ router.post("/generate-meet-link/:id", async (req, res) => {
 			calendarId: "primary",
 			requestBody: {
 				summary: "Reunión",
-				start: { dateTime: startTime,
-						timeZone: process.env.ZONE_TIME
-				 },
-				end: { dateTime: endTime,
-					timeZone: process.env.ZONE_TIME
+				start: {
+					dateTime: startTime,
+					timeZone: process.env.ZONE_TIME,
+				},
+				end: {
+					dateTime: endTime,
+					timeZone: process.env.ZONE_TIME,
 				},
 				conferenceData: {
 					createRequest: {
@@ -62,26 +92,27 @@ router.post("/generate-meet-link/:id", async (req, res) => {
 			},
 			conferenceDataVersion: 1,
 		});
-		console.log(event.data)
+		console.log(event.data);
 		res.status(200).json({
 			status: "success",
 			link: event.data.hangoutLink,
 		});
 	} catch (error) {
-		  if (error.message && error.message.includes('invalid_grant')) {
-			res.redirect('/api/generate-link/auth'
-
-			);
-		}else{
-console.error("Error generating link:", error);
-		res.status(500).json({
-			error: "Error generating link",
-			message: error.message,
-		});
-
+		console.error("Error generating link:", error);
+		if (
+			error.message.includes("invalid_grant") ||
+			error.message.includes("invalid_token") ||
+			error.message.includes("Token has been expired")
+		) {
+			res.redirect("/generate-link/auth");
+		} else {
+			console.error("Error generating link:", error);
+			res.status(500).json({
+				error: "Error generating link",
+				message: error.message,
+				link: "/generate-link/auth",
+			});
 		}
-
-
 	}
 });
 router.put("/save-meet-link/:id", async (req, res) => {
@@ -102,7 +133,6 @@ router.put("/save-meet-link/:id", async (req, res) => {
 			message: "Meeting link saved successfully",
 		});
 	} catch (error) {
-
 		console.error("Error saving meeting link:", error);
 		res.status(500).json({
 			error: "Error saving meeting link",
@@ -114,13 +144,15 @@ router.get("/oauth2callback", async (req, res) => {
 	const code = req.query.code; // <--- Aquí SI recibes el code
 	try {
 		const { tokens } = await oAuth2Client.getToken(code);
+		console.log(tokens)
 		oAuth2Client.setCredentials(tokens);
-		db.User.update(
+		const result = await db.User.update(
 			{
 				hash_google_meet: tokens.access_token,
 			},
 			{ where: { email: process.env.ADMIN_EMAIL } }
-		)
+		);
+		console.log(result)
 		res.setHeader(
 			"Content-Security-Policy",
 			"script-src 'self' 'nonce-12345';"
