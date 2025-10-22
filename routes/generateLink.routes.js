@@ -31,12 +31,10 @@ router.post("/generate-meet-link/:id", async (req, res) => {
 		// Si no existe el usuario o el hash_google_meet está vacío/null, redirige a auth
 		if (!user || !user.hash_google_meet) {
 			console.log("ola");
-			return res
-				.status(200)
-				.json({
-					link: "/generate-link/auth",
-					status: "redirect",
-				});
+			return res.status(200).json({
+				link: "/generate-link/auth",
+				status: "redirect",
+			});
 		}
 		oAuth2Client.setCredentials({
 			refresh_token: user.hash_google_meet,
@@ -144,7 +142,7 @@ router.get("/oauth2callback", async (req, res) => {
 	const code = req.query.code; // <--- Aquí SI recibes el code
 	try {
 		const { tokens } = await oAuth2Client.getToken(code);
-		console.log(tokens)
+		console.log(tokens);
 		oAuth2Client.setCredentials(tokens);
 		const result = await db.User.update(
 			{
@@ -152,7 +150,7 @@ router.get("/oauth2callback", async (req, res) => {
 			},
 			{ where: { email: process.env.ADMIN_EMAIL } }
 		);
-		console.log(result)
+		console.log(result);
 		res.setHeader(
 			"Content-Security-Policy",
 			"script-src 'self' 'nonce-12345';"

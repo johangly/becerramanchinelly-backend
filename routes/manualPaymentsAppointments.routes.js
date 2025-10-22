@@ -4,7 +4,6 @@ import { uploadArray } from "../utils/manageFiles.js";
 import { createNotification } from "../utils/notificationHelper.js";
 import { TZDate } from "@date-fns/tz";
 import logger from "../utils/logger.js";
-
 const router = express.Router();
 
 router.use(express.json());
@@ -31,7 +30,7 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 			appointment_id,
 			transactionDate,
 		} = formData;
-		logger.info(`formData ${JOSIN.stringify(formData, null, 2)}`);
+
 		const user = await db.User.findAll({
 			where: { cleark_id: user_id },
 		});
@@ -41,8 +40,17 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 		const PaymentsMethods = await db.PaymentsMethods.findAll({
 						where: { name: "Pago Externo" },
 					});
+		if (!appointment || appointment.length === 0) {
+			logger.info("Appointment not found");
+			await transaction.rollback();
+			return res.status(404).json({
+				status: "error",
+				message: "Appointment not found",
+			});
+		}
 		if (appointment[0].status === 'reservado') {
 			logger.info("Appointment is already booked");
+			await transaction.rollback();
 			return res.status(400).json({
 				status: "error",
 				message: "Appointment is already booked",
@@ -50,6 +58,7 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 		}
 		if (user.length === 0) {
 			logger.info("User not found");
+			await transaction.rollback();
 			return res.status(404).json({
 				status: "error",
 				message: "User not found",
@@ -82,7 +91,6 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 				},
 				{ transaction }
 			);
-		logger.info(`paymentAppointment ${JSON.stringify(paymentAppointment, null, 2)}`);
 		// guarda la informacion de la imagen y su ruta
 		const createImagePayment = await db.PaymentImages.create(
 			{
@@ -103,7 +111,6 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 			{ transaction }
 		);
 
-		logger.info(`createImagePayment ${JSON.stringify(createImagePayment, null, 2)}`);
 
 		const appointmentToUpdate = await db.Appointment.update(
 			{ status: "reservado" },
@@ -120,36 +127,35 @@ router.post("/", uploadArray("paymentImage", 1), async (req, res) => {
 
 		if (!adminUser) {
 			logger.info("Admin user not found");
+			await transaction.rollback();
 			return res.status(404).json({
 				status: "error",
 				message: "Admin user not found",
 			});
 		}
 
-		logger.info(`appointmentToUpdate ${JSON.stringify(appointmentToUpdate, null, 2)}`);
-
 		// Crear notificación para el administrador
+		const requestUser = user && user.length ? user[0] : null;
+		const appt = appointment && appointment.length ? appointment[0] : null;
+
 		const creatingNotification = await db.Notification.create({
 			title: 'Nuevo pago pendiente por aprobar',
-			body: `Se ha recibido un pago por el monto de ${paymentAppointment.amount}$${user.name ? ` por el usuario ${user.name}` : ''}`,
+			body: `Se ha recibido un pago por el monto de ${Number(paymentAppointment.amount).toFixed(2)}$${requestUser?.name ? ` por el usuario ${requestUser.name}` : ''}`,
 			type: 'success',
-			modalBody: `Se ha recibido un pago por el monto de ${paymentAppointment.amount}$${user.name ? ` por el usuario ${user.name}` : ''} para la fecha ${new TZDate(appointmentToUpdate.day, ZONE).internal} que inicia a las ${new TZDate(appointmentToUpdate.start_time, ZONE).internal} y termina a las ${new TZDate(appointmentToUpdate.end_time, ZONE).internal}
+			modalBody: `Se ha recibido un pago por el monto de ${Number(paymentAppointment.amount).toFixed(2)}$${requestUser?.name ? ` por el usuario ${requestUser.name}` : ''} para la fecha ${appt?.day ?? 'N/D'} que inicia a las ${appt?.start_time ?? 'N/D'} y termina a las ${appt?.end_time ?? 'N/D'}
 			| Nombre del cliente: ${client_name}
 			| Telefono del cliente: ${client_phone}
 			| Correo electrónico: ${client_email}
-			| Fecha de transacción: ${new TZDate(transactionDate, ZONE).internal}
+			| Fecha de transacción: ${(transactionDate ? new TZDate(transactionDate, ZONE).internal : new TZDate(new Date(), ZONE).internal)}
 			| Referencia: ${paymentAppointment.reference}
-			| Monto del pago: ${paymentAppointment.amount}
-			| Notas: ${notes}
+			| Monto del pago: ${Number(paymentAppointment.amount).toFixed(2)}
+			| Notas: ${notes ?? ''}
 			| Metodo de pago: Pago Externo
 			`,
 			user_id: adminUser.id,
 			payment_id: paymentAppointment.id,
-			created_at: new TZDate(new Date(), ZONE).internal,
-			updated_at: new TZDate(new Date(), ZONE).internal
-		});
-		logger.info(`creatingNotification ${JSON.stringify(creatingNotification, null, 2)}`);
-
+		}, { transaction });
+		
 		if (creatingNotification) {
 			logger.info("Notification created successfully");
 
