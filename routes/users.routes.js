@@ -5,6 +5,7 @@ import { verifyWebhook } from '@clerk/express/webhooks'
 import bodyParser from "body-parser";
 import { clerkMiddleware } from '@clerk/express'
 import express from 'express';
+import { ro } from 'date-fns/locale';
 
 const router = express.Router();
 router.use(clerkMiddleware());
@@ -43,7 +44,7 @@ router.post('/webhook', bodyParser.raw({ type: 'application/json' }), async (req
       console.log('No se encontro el id del usuario');
       return res.status(400).json({ error: 'No se encontro el id del usuario' });
     }
-    
+
     if(!email_addresses){
       console.log('No se encontro el emails');
       return res.status(400).json({ error: 'No se encontro el emails' });
@@ -53,7 +54,7 @@ router.post('/webhook', bodyParser.raw({ type: 'application/json' }), async (req
       console.log('No se encontro el email del usuario');
       return res.status(400).json({ error: 'No se encontro el email del usuario' });
     }
-    
+
     const user = await db.User.create({
       cleark_id: id,
       name: first_name && last_name ? `${first_name} ${last_name}` : null,

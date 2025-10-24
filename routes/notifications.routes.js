@@ -15,6 +15,25 @@ router.get("/", async (req, res) => {
 		res.status(500).json({ message: "Internal server error" });
 	}
 });
+router.put("/mark-notifications-read", async (req, res) => {
+	const { idsNotifications } = req.body;
+	try {
+		const result = await db.Notification.update(
+			{ seen: true },
+			{ where: { id: idsNotifications } }
+		);
+		res.status(200).json({
+			status: "success",
+			message: "Notifications marked as read",
+		});
+	} catch (error) {
+		console.error("Error marking notifications as read:", error);
+		res.status(500).json({
+			error: "Error marking notifications as read",
+			message: error.message,
+		});
+	}
+});
 router.get("/:userId", async (req, res) => {
 	const { userId } = req.params;
 	try {

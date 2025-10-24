@@ -1,3 +1,4 @@
+import { TZDate } from "@date-fns/tz";
 import db from "../database/index.js";
 import express from "express";
 import { google } from "googleapis";
@@ -118,6 +119,9 @@ router.put("/save-meet-link/:id", async (req, res) => {
 	const { link } = req.body;
 	try {
 		const appointment = await db.Appointment.findByPk(id);
+		const paymentAppointment = await db.PaymentsAppointments.findOne({
+			where: { appointment_id: appointment.id },
+		});
 		if (!appointment) {
 			return res
 				.status(404)
@@ -125,6 +129,17 @@ router.put("/save-meet-link/:id", async (req, res) => {
 		}
 		appointment.meeting_link = link;
 		await appointment.save();
+		const creatingNotification = await db.Notification.create({
+					title: 'Link de la reunión generado',
+					body: `Se ha generado un nuevo link para la reunión.`,
+					type: 'success',
+					modalBody: `El link de la reunión para la cita del día ${new TZDate(appointment.day).toLocaleString()} ha sido generado exitosamente.
+					Puedes encontrar el link en los detalles de la cita.
+					| Link de la reunión: ${link}
+			`,
+					user_id: paymentAppointment.user_id,
+					payment_id: paymentAppointment.id,
+		});
 		res.status(200).json({
 			status: "success",
 			appointment,
